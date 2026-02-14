@@ -2,7 +2,7 @@
 
 ## Stack
 
-TypeScript (strict mode), NestJS, Jest, class-validator, class-transformer.
+TypeScript (strict mode), NestJS, Jest, class-validator, class-transformer, TypeORM, SQLite.
 
 ## Commands
 
@@ -148,6 +148,68 @@ it('POST /users — 400 on invalid body', () => {
 - Schema changes via migrations only.
 - Use transactions for multi-table writes.
 - Add indexes for columns in WHERE, JOIN, ORDER BY.
+
+## TypeORM with SQLite
+
+**Dependencies**: `@nestjs/typeorm`, `typeorm`, `sqlite3`
+
+**Configuration** (in `app.module.ts`):
+```typescript
+import { TypeOrmModule } from '@nestjs/typeorm';
+
+@Module({
+  imports: [
+    TypeOrmModule.forRoot({
+      type: 'sqlite',
+      database: 'db.sqlite',
+      entities: [__dirname + '/**/*.entity{.ts,.js}'],
+      synchronize: process.env.NODE_ENV !== 'production', // disable in prod
+    }),
+  ],
+})
+```
+
+**Entities** (in `<feature>/entities/<name>.entity.ts`):
+```typescript
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn } from 'typeorm';
+
+@Entity('users')
+export class User {
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
+
+  @Column({ unique: true })
+  email: string;
+
+  @Column()
+  name: string;
+
+  @CreateDateColumn()
+  createdAt: Date;
+}
+```
+
+**Use in module**:
+```typescript
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { User } from './entities/user.entity';
+
+@Module({
+  imports: [TypeOrmModule.forFeature([User])],
+  // ...
+})
+```
+
+**Inject repository**:
+```typescript
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+
+constructor(
+  @InjectRepository(User)
+  private readonly userRepo: Repository<User>,
+) {}
+```
 
 ## Git
 
